@@ -215,7 +215,7 @@ const Dashboard = () => {
     }
     const editUser = () => {
         const id = idN
-        console.log(id);
+        console.log(id); //7
         dataArray[id] = { id: dataArray[id].id, name: firstname, category: categoryName, age: age, email: email, phone: phone }
         console.log(dataArray);
         closeModal()
@@ -225,10 +225,10 @@ const Dashboard = () => {
 
     const editUserModal = (id) => {
         console.log(dataArray);
-        console.log(id);
+        console.log(id); //7
         let index = dataArray.findIndex(data => data.id == id);
-        console.log(index);
-        setIdN(dataArray[index].id)
+        console.log(index); //6
+        setIdN(index)
         setFirstname(dataArray[index].name)
         setEmail(dataArray[index].email)
         setPhone(dataArray[index].phone)
