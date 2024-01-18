@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import ReactModal from "react-modal";
 import Edit from '../icons/edit'
+import Delete from '../icons/delete';
 
 const Dashboard = () => {
 
@@ -57,6 +58,7 @@ const Dashboard = () => {
 
     const displayData = (category) => {
         return dataArray.filter((data) => data.category === category).map((data) => {
+            console.log("data", data);
             return <div
                 key={data.id}
                 draggable
@@ -87,11 +89,18 @@ const Dashboard = () => {
                     </div>
                     <div className='flex-between-center'>
                         <div className={`${cardSelected == data.id ? "tagSelected" : "tag"}`}>{data.category}</div>
-                        <div onClick={() => {
-                            openModal();
-                            editUserModal(data.id);
-                        }} style={{ cursor: "pointer" }}>
-                            <Edit strokeColor={cardSelected == data.id ? "#ffffff" : "#7498fb"} />
+                        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                            <div onClick={() => {
+                                openModal();
+                                editUserModal(data.id);
+                            }} style={{ cursor: "pointer" }}>
+                                <Edit strokeColor={cardSelected == data.id ? "#ffffff" : "#7498fb"} />
+                            </div>
+                            <div onClick={() => {
+                                deleteUser(data.id);
+                            }} style={{ cursor: "pointer" }}>
+                                <Delete />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -128,6 +137,8 @@ const Dashboard = () => {
     const [modalIsOpen, setIsOpen] = useState(false);
 
     function openModal() {
+        setIsDisabled(true)
+        setEdit(false)
         setIsOpen(true);
     }
 
@@ -195,7 +206,8 @@ const Dashboard = () => {
 
 
     const addNewUser = () => {
-        dataArray.push({ id: dataArray.length, name: firstname, category: categoryName, age: age, email: email, phone: phone })
+        const lastObj = dataArray[dataArray.length - 1];
+        dataArray.push({ id: lastObj.id + 1, name: firstname, category: categoryName, age: age, email: email, phone: phone })
         console.log(dataArray);
         closeModal()
 
@@ -203,6 +215,7 @@ const Dashboard = () => {
     }
     const editUser = () => {
         const id = idN
+        console.log(id);
         dataArray[id] = { id: dataArray[id].id, name: firstname, category: categoryName, age: age, email: email, phone: phone }
         console.log(dataArray);
         closeModal()
@@ -210,14 +223,23 @@ const Dashboard = () => {
 
     }
 
-    const editUserModal = (idx) => {
-        setIdN(dataArray[idx].id)
-        setFirstname(dataArray[idx].name)
-        setEmail(dataArray[idx].email)
-        setPhone(dataArray[idx].phone)
-        setAge(dataArray[idx].age)
+    const editUserModal = (id) => {
+        console.log(dataArray);
+        console.log(id);
+        let index = dataArray.findIndex(data => data.id == id);
+        console.log(index);
+        setIdN(dataArray[index].id)
+        setFirstname(dataArray[index].name)
+        setEmail(dataArray[index].email)
+        setPhone(dataArray[index].phone)
+        setAge(dataArray[index].age)
         setEdit(true)
         // editUser(dataArray[id])
+    }
+
+    const deleteUser = (id) => {
+        const removedObj = dataArray.filter((item) => item.id !== id);
+        setDataArray(dataArray.filter((item) => item.id !== id))
     }
     return (
         <div style={{ backgroundColor: "#F3F4F8" }}>
@@ -272,8 +294,6 @@ const Dashboard = () => {
                             style={{ paddingTop: "1rem", display: "flex", justifyContent: "space-around" }}
 
                         >
-
-
                             <div
                                 className={`${dropIndicator == "teenage" ? "usersColumnSelected" : "usersColumn"}`}
                                 id="teenage"
@@ -409,17 +429,17 @@ const Dashboard = () => {
                     </div>
                     {edit ?
                         <div
-                            onClick={isDisabled == false && editUser}
+                            onClick={isDisabled == false ? editUser : () => { }}
                             className={isDisabled ? "addButtonDisabled" : "addButton"}
                             style={{ width: "10vw", textAlign: "center", marginTop: "2rem", cursor: "pointer" }}
 
                         >
                             <div>Edit</div>
-                            <div><img src='/images/edit.svg' width={"15px"} /></div>
+                            <Edit strokeColor={"#fff"} />
                         </div>
                         :
                         <div
-                            onClick={isDisabled == false && addNewUser}
+                            onClick={isDisabled == false ? addNewUser : () => { }}
                             className={isDisabled ? "addButtonDisabled" : "addButton"}
                             style={{ width: "10vw", textAlign: "center", marginTop: "2rem", cursor: "pointer" }}
 
@@ -430,10 +450,10 @@ const Dashboard = () => {
                     }
 
                 </div>
-            </ReactModal>
+            </ReactModal >
 
 
-        </div>
+        </div >
     )
 }
 
