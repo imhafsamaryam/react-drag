@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import ReactModal from "react-modal";
 import Edit from '../icons/edit'
 import Delete from '../icons/delete';
+import CustomInput from './customInput';
 
 const Dashboard = () => {
 
@@ -53,7 +54,6 @@ const Dashboard = () => {
     document.body.addEventListener("click", function (evt) {
         setCardSlected();
         setDropIndicator();
-        console.log("clicked");
     });
 
     const displayData = (category) => {
@@ -78,15 +78,21 @@ const Dashboard = () => {
                             <div className={`${cardSelected == data.id ? "userCardHeadingSelected" : "userCardHeading"}`}>
                                 {data.name}
                             </div>
-                            <div className={`${cardSelected == data.id ? "userCardSubHeadingSelected" : "userCardSubHeading"}`}>
+                            <div style={{ paddingBottom: "1rem" }} className={`${cardSelected == data.id ? "userCardSubHeadingSelected" : "userCardSubHeading"}`}>
                                 {data.email}
                                 <div>{data.phone}</div>
+                                {data.additionalData &&
+                                    data.additionalData.map((item) => {
+                                        return <div>{item.value}</div>
+                                    })
+                                }
                             </div>
                         </div>
                         <div className={`${cardSelected == data.id ? "ageTextSelected" : "ageText"}`}>
                             {data.age}Y/O
                         </div>
                     </div>
+
                     <div className='flex-between-center'>
                         <div className={`${cardSelected == data.id ? "tagSelected" : "tag"}`}>{data.category}</div>
                         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
@@ -121,6 +127,7 @@ const Dashboard = () => {
         content: {
             width: "40%",
             height: "80%",
+            overflow: "scroll",
             // height: "90%",
             margin: "auto",
             backgroundColor: "#fff",
@@ -144,16 +151,20 @@ const Dashboard = () => {
 
     function closeModal() {
         setIsOpen(false);
+        setAdditionalDataExists(false)
+        setFormValues([])
         setFirstname()
         setEmail()
         setPhone()
         setAge()
     }
 
+
     const [isDisabled, setIsDisabled] = useState(true);
     const [edit, setEdit] = useState(false);
     const [idN, setIdN] = useState(0);
 
+    const [additionalDataExists, setAdditionalDataExists] = useState(false);
 
 
     const [firstname, setFirstname] = useState();
@@ -205,20 +216,84 @@ const Dashboard = () => {
 
 
 
+    //Adding custom input fields
+
+    const [formValues, setFormValues] = useState([]);
+    const [additionalObj, setAdditionalObj] = useState([])
+    const [additionalObjEdit, setAdditionalObjEdit] = useState([])
+    const [toggle, setToggle] = useState(false);
+
+    const inputRef = useRef();
+    const selectRef = useRef();
+
+    const handleAdditionalChange = (e, index) => {
+        const values = [...formValues];
+        values[index].value = e.target.value;
+        setIsDisabled(false)
+        setFormValues(values);
+    };
+
+    const handleEditAdditionalChange = (e, index) => {
+        console.log(additionalObjEdit);
+        const values = [...additionalObjEdit];
+        values[index].value = e.target.value;
+        setAdditionalObjEdit(values);
+        setIsDisabled(false)
+    };
+
+    console.log("formValues", formValues);
+
+
+    const handleAddField = (e) => {
+        e.preventDefault();
+        const values = [...formValues];
+        values.push({
+            label: inputRef.current.value || "label",
+            type: selectRef.current.value || "text",
+            value: "",
+        });
+        setFormValues(values);
+        setAdditionalObj(values);
+       
+        setToggle(false);
+    };
+
+    const addBtnClick = (e) => {
+        e.preventDefault();
+        setToggle(true);
+
+    };
+
+
+
     const addNewUser = () => {
+
         const lastObj = dataArray[dataArray.length - 1];
-        dataArray.push({ id: lastObj.id + 1, name: firstname, category: categoryName, age: age, email: email, phone: phone })
-        console.log(dataArray);
-        closeModal()
-
-
+        if (formValues.length > 0) {
+            dataArray.push({ id: lastObj.id + 1, name: firstname, category: categoryName, age: age, email: email, phone: phone })
+            dataArray[lastObj.id + 1]["additionalData"] = additionalObj
+            console.log(dataArray);
+            closeModal()
+        } else {
+            dataArray.push({ id: lastObj.id + 1, name: firstname, category: categoryName, age: age, email: email, phone: phone })
+            console.log(dataArray);
+            closeModal()
+        }
     }
     const editUser = () => {
         const id = idN
         console.log(id); //7
-        dataArray[id] = { id: dataArray[id].id, name: firstname, category: categoryName, age: age, email: email, phone: phone }
-        console.log(dataArray);
-        closeModal()
+        if (dataArray[id].additionalData && dataArray[id].additionalData.length > 0) {
+            dataArray[id] = { id: dataArray[id].id, name: firstname, category: categoryName, age: age, email: email, phone: phone }
+            dataArray[id]["additionalData"] = additionalObjEdit
+            console.log(dataArray);
+            closeModal()
+        } else {
+            dataArray[id] = { id: dataArray[id].id, name: firstname, category: categoryName, age: age, email: email, phone: phone }
+            console.log(dataArray);
+            closeModal()
+        }
+
 
 
     }
@@ -229,11 +304,31 @@ const Dashboard = () => {
         let index = dataArray.findIndex(data => data.id == id);
         console.log(index); //6
         setIdN(index)
-        setFirstname(dataArray[index].name)
-        setEmail(dataArray[index].email)
-        setPhone(dataArray[index].phone)
-        setAge(dataArray[index].age)
-        setEdit(true)
+        // console.log("heeloo", dataArray[index].additionalData.length);
+
+        if (dataArray[index].additionalData && dataArray[index].additionalData.length > 0) {
+            console.log("additional data exists");
+            setAdditionalDataExists(true)
+            // const values = [...additionalObjEdit];
+            // values.push({
+            //     label: dataArray[index].additionalData.label,
+            //     type: dataArray[index].additionalData.type,
+            //     value: dataArray[index].additionalData.value,
+            // });
+            setAdditionalObjEdit(dataArray[index].additionalData);
+            console.log(additionalObjEdit);
+            setFirstname(dataArray[index].name)
+            setEmail(dataArray[index].email)
+            setPhone(dataArray[index].phone)
+            setAge(dataArray[index].age)
+            setEdit(true)
+        } else {
+            setFirstname(dataArray[index].name)
+            setEmail(dataArray[index].email)
+            setPhone(dataArray[index].phone)
+            setAge(dataArray[index].age)
+            setEdit(true)
+        }
         // editUser(dataArray[id])
     }
 
@@ -241,6 +336,7 @@ const Dashboard = () => {
         const removedObj = dataArray.filter((item) => item.id !== id);
         setDataArray(dataArray.filter((item) => item.id !== id))
     }
+
     return (
         <div style={{ backgroundColor: "#F3F4F8" }}>
             <div
@@ -392,7 +488,7 @@ const Dashboard = () => {
                             onChange={(e) => handleEmail(e)}
                             id="first_name"
                             className="form-control input-sm"
-                            placeholder="Email"
+                            placeholder="Enter email"
                             style={{ width: "70%", borderRadius: "12px", border: "1px solid #ced4da", fontSize: "14px", padding: "0.48rem" }}
 
                         />
@@ -407,7 +503,7 @@ const Dashboard = () => {
                             value={phone}
                             onChange={(e) => handleNumber(e)}
                             className="form-control input-sm"
-                            placeholder="Phone"
+                            placeholder="Enter phone number"
                             style={{ width: "70%", borderRadius: "12px", border: "1px solid #ced4da", fontSize: "14px", padding: "0.48rem" }}
 
                         />
@@ -422,11 +518,75 @@ const Dashboard = () => {
                             value={age}
                             onChange={(e) => handleAge(e)}
                             className="form-control input-sm"
-                            placeholder="Phone"
+                            placeholder="Enter age"
                             style={{ width: "70%", borderRadius: "12px", border: "1px solid #ced4da", fontSize: "14px", padding: "0.48rem" }}
 
                         />
                     </div>
+                    {
+                        additionalDataExists &&
+                        additionalObjEdit.map((item, index) => {
+
+                            return < div >
+                                <div className="form-label">{item.label}</div>
+
+                                <input
+                                    type={item.type}
+                                    // maxLength={3}
+                                    name="age"
+                                    value={item.value}
+                                    onChange={(e) => handleEditAdditionalChange(e, index)}
+                                    className="form-control input-sm"
+                                    placeholder="Enter age"
+                                    style={{ width: "70%", borderRadius: "12px", border: "1px solid #ced4da", fontSize: "14px", padding: "0.48rem" }}
+
+                                />
+                            </div>
+                        })
+                    }
+                    {formValues.map((obj, index) => (
+
+                        <CustomInput
+                            key={index}
+                            objValue={obj}
+                            onChange={handleAdditionalChange}
+                            index={index}
+                        />
+                    ))}
+                    {!toggle ? (
+                        <div
+                            onClick={addBtnClick}
+                            className={"addFieldButton"}
+                            style={{ width: "10vw", textAlign: "center", marginTop: "2rem", cursor: "pointer" }}
+
+                        >
+                            <div>Add Input Field </div>
+                            <div><img src='/images/add.svg' width={"15px"} /></div>
+                        </div>
+
+                    ) : (
+                        <div className="dialog-box">
+                            <div className="form-label">Label</div>
+
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <input type="text" placeholder="Enter label" ref={inputRef} style={{ width: "40%", borderRadius: "12px", border: "1px solid #ced4da", fontSize: "14px", padding: "0.48rem" }}
+                                />
+                                <select ref={selectRef}
+                                    style={{ width: "40%", borderRadius: "12px", border: "1px solid #ced4da", fontSize: "14px", padding: "0.48rem" }}
+                                >
+                                    <option value="text">Text</option>
+                                    <option value="number">Number</option>
+                                    <option value="email">Email</option>
+                                    <option value="password">Password</option>
+                                    {/* <option value="file">File</option> */}
+                                </select>
+                                <div className="addButton" onClick={handleAddField}>
+                                    Add
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {edit ?
                         <div
                             onClick={isDisabled == false ? editUser : () => { }}
@@ -434,7 +594,7 @@ const Dashboard = () => {
                             style={{ width: "10vw", textAlign: "center", marginTop: "2rem", cursor: "pointer" }}
 
                         >
-                            <div>Edit</div>
+                            <div>Edit User</div>
                             <Edit strokeColor={"#fff"} />
                         </div>
                         :
@@ -444,7 +604,7 @@ const Dashboard = () => {
                             style={{ width: "10vw", textAlign: "center", marginTop: "2rem", cursor: "pointer" }}
 
                         >
-                            <div>Add</div>
+                            <div>Add User</div>
                             <div><img src='/images/adduser.svg' width={"15px"} /></div>
                         </div>
                     }
